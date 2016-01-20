@@ -1,10 +1,12 @@
 package edu.uw.fragmentdemo;
 
 
+import android.app.Fragment;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,12 +52,12 @@ public class MovieFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context){
+    public void onAttach(Context context) {
         super.onAttach(context);
 
         try {
             callback = (OnMovieSelectionListener) context;
-        }catch(ClassCastException e){
+        } catch (ClassCastException e) {
             throw new ClassCastException(context.toString() + " must implement OnMovieSelectionListener");
         }
 
@@ -69,14 +71,25 @@ public class MovieFragment extends Fragment {
         // Inflate the layout for this fragment
         final View rootView = inflater.inflate(R.layout.fragment_movie, container, false);
 
-        Button searchButton = (Button)rootView.findViewById(R.id.btnSearch);
+        Button changeOrientation = (Button) rootView.findViewById(R.id.changeOrientation);
+        changeOrientation.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                } else {
+                    getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                }
+            }
+        });
+
+        Button searchButton = (Button) rootView.findViewById(R.id.btnSearch);
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "searching...");
 
                 MovieDownloadTask task = new MovieDownloadTask();
-                EditText searchBox = (EditText)rootView.findViewById(R.id.txtSearch);
+                EditText searchBox = (EditText) rootView.findViewById(R.id.txtSearch);
                 String searchTerm = searchBox.getText().toString();
                 task.execute(searchTerm);
             }
@@ -91,7 +104,7 @@ public class MovieFragment extends Fragment {
                 getActivity(), R.layout.list_item, R.id.txtItem, list);
 
         //support ListView or GridView
-        AdapterView listView = (AdapterView)rootView.findViewById(R.id.listView);
+        AdapterView listView = (AdapterView) rootView.findViewById(R.id.listView);
         listView.setAdapter(adapter);
 
         //respond to item clicking
@@ -102,7 +115,7 @@ public class MovieFragment extends Fragment {
                 Log.i(TAG, "selected: " + movie.toString());
 
                 //swap the fragments to show the detail
-                ((OnMovieSelectionListener)getActivity()).onMovieSelected(movie);
+                ((OnMovieSelectionListener) getActivity()).onMovieSelected(movie);
 
             }
         });
@@ -117,7 +130,7 @@ public class MovieFragment extends Fragment {
      */
     public class MovieDownloadTask extends AsyncTask<String, Void, ArrayList<Movie>> {
 
-        protected ArrayList<Movie> doInBackground(String... params){
+        protected ArrayList<Movie> doInBackground(String... params) {
 
             String movie = params[0];
 
@@ -125,7 +138,7 @@ public class MovieFragment extends Fragment {
             String urlString = "";
             try {
                 urlString = "http://www.omdbapi.com/?s=" + URLEncoder.encode(movie, "UTF-8") + "&type=movie";
-            }catch(UnsupportedEncodingException uee){
+            } catch (UnsupportedEncodingException uee) {
                 return null;
             }
 
@@ -160,19 +173,16 @@ public class MovieFragment extends Fragment {
                 String results = buffer.toString();
 
                 movies = parseMovieJSONData(results); //convert JSON results into Movie objects
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 return null;
-            }
-            finally {
+            } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
                 if (reader != null) {
                     try {
                         reader.close();
-                    }
-                    catch (final IOException e) {
+                    } catch (final IOException e) {
                     }
                 }
             }
@@ -180,8 +190,8 @@ public class MovieFragment extends Fragment {
             return movies;
         }
 
-        protected void onPostExecute(ArrayList<Movie> movies){
-            if(movies != null) {
+        protected void onPostExecute(ArrayList<Movie> movies) {
+            if (movies != null) {
                 adapter.clear();
                 adapter.addAll(movies);
             }
@@ -190,12 +200,12 @@ public class MovieFragment extends Fragment {
         /**
          * Parses a JSON-format String (from OMDB search results) into a list of Movie objects
          */
-        public ArrayList<Movie> parseMovieJSONData(String json){
+        public ArrayList<Movie> parseMovieJSONData(String json) {
             ArrayList<Movie> movies = new ArrayList<Movie>();
 
             try {
                 JSONArray moviesJsonArray = new JSONObject(json).getJSONArray("Search"); //get array from "search" key
-                for(int i=0; i<moviesJsonArray.length(); i++){
+                for (int i = 0; i < moviesJsonArray.length(); i++) {
                     JSONObject movieJsonObject = moviesJsonArray.getJSONObject(i); //get ith object from array
                     Movie movie = new Movie();
                     movie.title = movieJsonObject.getString("Title"); //get title from object

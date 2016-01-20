@@ -1,48 +1,40 @@
 package edu.uw.fragmentdemo;
 
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.ArrayList;
+import android.support.v7.app.AppCompatActivity;
 
 public class MovieActivity extends AppCompatActivity implements MovieFragment.OnMovieSelectionListener {
 
     private static final String TAG = "MovieActivity";
+    boolean checkOrientation;
+
+    FragmentTransaction ft;
+    DetailFragment detailFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        FragmentManager manager = getFragmentManager();
-
-        FragmentTransaction ft = manager.beginTransaction();
+        detailFragment = new DetailFragment();
+        ft = getFragmentManager().beginTransaction();
         ft.add(R.id.container, new MovieFragment());
+        ft.add(R.id.container, detailFragment).addToBackStack(null);
         ft.commit();
-
+        ft.hide(detailFragment);
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // It doesn't work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WHY!!!!!!!!!!!
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            ft.show(detailFragment);
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            ft.hide(detailFragment);
+        }
+    }
 
     @Override
     public void onMovieSelected(Movie movie) {
@@ -64,7 +56,7 @@ public class MovieActivity extends AppCompatActivity implements MovieFragment.On
 
     //for support class Activity
     public void onBackPressed() {
-        if(getFragmentManager().getBackStackEntryCount() != 0) {
+        if (getFragmentManager().getBackStackEntryCount() != 0) {
             getFragmentManager().popBackStack();
         } else {
             super.onBackPressed();
